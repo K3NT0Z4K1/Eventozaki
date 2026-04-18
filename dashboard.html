@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eventozaki — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0b1628;
+      --navy-mid: #112240;
+      --navy-light: #1a2f52;
+      --gold: #f5c842;
+      --gold-dim: #c9a227;
+      --white: #f0f4ff;
+      --muted: #8892a4;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.09);
+      --success: #43d98c;
+      --danger: #ff5f6d;
+      --sidebar-w: 240px;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--white);
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy-mid);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 20px;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .brand-logo {
+      width: 36px; height: 36px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 14px;
+      color: var(--navy);
+    }
+
+    .brand h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+    }
+    .brand h1 span { color: var(--gold); }
+
+    .nav-label {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      margin-top: 4px;
+      padding-left: 10px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: var(--glass); color: var(--white); }
+    .nav-item.active { background: rgba(245,200,66,0.12); color: var(--gold); }
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      border-top: 1px solid var(--glass-border);
+      padding-top: 16px;
+    }
+
+    .user-info {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 10px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 13px;
+      color: var(--navy);
+    }
+
+    .user-details { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 11px; color: var(--muted); }
+
+    .btn-logout {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255,95,109,0.1);
+      border: 1px solid rgba(255,95,109,0.2);
+      color: var(--danger);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,95,109,0.2); }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      padding: 22px 32px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; }
+    .topbar-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .btn-primary {
+      padding: 10px 20px;
+      background: var(--gold);
+      color: var(--navy);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover { background: var(--gold-dim); }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .content { padding: 28px 32px; flex: 1; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; margin-top: 6px; }
+    .stat-value.gold { color: var(--gold); }
+    .stat-value.green { color: var(--success); }
+
+    /* Events Table */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 16px;
+    }
+
+    .search-input {
+      padding: 8px 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      width: 220px;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--gold); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .events-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .events-table th {
+      text-align: left;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .events-table td {
+      padding: 14px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+
+    .events-table tr:hover td { background: var(--glass); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-open { background: rgba(67,217,140,0.15); color: var(--success); }
+    .badge-closed { background: rgba(255,95,109,0.15); color: var(--danger); }
+
+    .action-btns { display: flex; gap: 8px; }
+
+    .btn-sm {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      color: var(--white);
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    .btn-sm:hover { background: rgba(255,255,255,0.1); }
+    .btn-sm.gold { border-color: var(--gold); color: var(--gold); }
+    .btn-sm.gold:hover { background: rgba(245,200,66,0.1); }
+    .btn-sm.danger { border-color: rgba(255,95,109,0.4); color: var(--danger); }
+    .btn-sm.danger:hover { background: rgba(255,95,109,0.1); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--white); margin-bottom: 6px; }
+    .empty-state p { font-size: 14px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--navy-light);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 14px;
+      display: flex; align-items: center; gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(67,217,140,0.3); color: var(--success); }
+    .toast.error { border-color: rgba(255,95,109,0.3); color: var(--danger); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+    .spinner {
+      display: inline-block; width: 20px; height: 20px;
+      border: 2px solid var(--glass-border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .event-name { font-weight: 500; }
+    .event-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">EZ</div>
+    <h1>evento<span>zaki</span></h1>
+  </div>
+
+  <div class="nav-label">Menu</div>
+  <a class="nav-item active" href="dashboard.html">
+    <span class="icon">📋</span> Dashboard
+  </a>
+  <a class="nav-item" href="create-event.html">
+    <span class="icon">✨</span> Create Event
+  </a>
+
+  <div class="sidebar-bottom">
+    <div class="user-info">
+      <div class="user-avatar" id="avatarInitial">A</div>
+      <div class="user-details">
+        <div class="user-name" id="userEmail">Admin</div>
+        <div class="user-role">Administrator</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-sub">Manage your school events</div>
+    </div>
+    <a href="create-event.html" class="btn-primary">＋ Create Event</a>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Events</div>
+        <div class="stat-value gold" id="statTotal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open Events</div>
+        <div class="stat-value green" id="statOpen">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Responses</div>
+        <div class="stat-value" id="statResponses">—</div>
+      </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="section-header">
+      <div class="section-title">All Events</div>
+      <input class="search-input" id="searchInput" placeholder="🔍 Search events..." oninput="filterEvents()"/>
+    </div>
+
+    <div id="eventsContainer">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { auth } from './firebase-config.js';
+  import { db } from './firebase-config.js';
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { collection, getDocs, doc, updateDoc, deleteDoc, getCountFromServer, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  let allEvents = [];
+
+  // Auth guard
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    const email = user.email || 'Admin';
+    document.getElementById('userEmail').textContent = email;
+    document.getElementById('avatarInitial').textContent = email[0].toUpperCase();
+    await loadEvents();
+  });
+
+  async function loadEvents() {
+    try {
+      const snap = await getDocs(collection(db, 'events'));
+      allEvents = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // Stats
+      document.getElementById('statTotal').textContent = allEvents.length;
+      document.getElementById('statOpen').textContent = allEvents.filter(e => e.isOpen).length;
+
+      // Count all responses
+      let totalResp = 0;
+      for (const ev of allEvents) {
+        try {
+          const regCol = collection(db, 'registrations', ev.id, 'responses');
+          const c = await getCountFromServer(regCol);
+          totalResp += c.data().count;
+        } catch {}
+      }
+      document.getElementById('statResponses').textContent = totalResp;
+
+      renderEvents(allEvents);
+    } catch (e) {
+      document.getElementById('eventsContainer').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Error loading events</h3><p>${e.message}</p></div>`;
+    }
+  }
+
+  function renderEvents(events) {
+    const container = document.getElementById('eventsContainer');
+    if (events.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>No events yet</h3>
+          <p>Create your first event to get started</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <table class="events-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Responses</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="eventsBody">
+          ${events.map(ev => `
+            <tr>
+              <td>
+                <div class="event-name">${ev.title || 'Untitled'}</div>
+                <div class="event-date">${ev.description ? ev.description.slice(0, 60) + (ev.description.length > 60 ? '...' : '') : ''}</div>
+              </td>
+              <td>${ev.date || '—'}</td>
+              <td><span class="badge ${ev.isOpen ? 'badge-open' : 'badge-closed'}">${ev.isOpen ? 'Open' : 'Closed'}</span></td>
+              <td id="resp-${ev.id}">—</td>
+              <td>
+                <div class="action-btns">
+                  <a href="event-manage.html?id=${ev.id}" class="btn-sm gold">Manage</a>
+                  <button class="btn-sm" onclick="toggleEvent('${ev.id}', ${ev.isOpen})">${ev.isOpen ? 'Close' : 'Open'}</button>
+                  <button class="btn-sm danger" onclick="deleteEvent('${ev.id}')">Delete</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    // Load response counts
+    events.forEach(async ev => {
+      try {
+        const regCol = collection(db, 'registrations', ev.id, 'responses');
+        const c = await getCountFromServer(regCol);
+        const el = document.getElementById(`resp-${ev.id}`);
+        if (el) el.textContent = c.data().count;
+      } catch {}
+    });
+  }
+
+  window.filterEvents = function() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    renderEvents(allEvents.filter(e => (e.title || '').toLowerCase().includes(q)));
+  };
+
+  window.toggleEvent = async function(id, isOpen) {
+    try {
+      await updateDoc(doc(db, 'events', id), { isOpen: !isOpen });
+      showToast(!isOpen ? 'Event opened for registration' : 'Event closed', !isOpen ? 'success' : 'error');
+      await loadEvents();
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  };
+
+  window.deleteEvent = async function(id) {
+    if (!confirm('Delete this event and all its responses? This cannot be undone.')) return;
+    try {
+      await deleteDoc(doc(db, 'events', id));
+      showToast('Event deleted', 'error');
+      await loadEvents();
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+  };
+
+  window.handleLogout = async function() {
+    await signOut(auth);
+    window.location.href = 'index.html';
+  };
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+</script>
+</body>
+</html>
