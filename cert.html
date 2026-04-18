@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eventozaki — Your E-Certificate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0b1628; --navy-mid: #112240;
+      --gold: #f5c842; --gold-dim: #c9a227;
+      --white: #f0f4ff; --muted: #8892a4;
+      --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.09);
+      --success: #43d98c;
+    }
+    body { min-height: 100vh; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 16px 60px; }
+    .bg-blob { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.15; pointer-events: none; }
+    .blob1 { width: 500px; height: 500px; background: var(--gold); top: -100px; right: -100px; }
+    .blob2 { width: 400px; height: 400px; background: #3a7bd5; bottom: -80px; left: -80px; }
+    .container { width: 100%; max-width: 700px; position: relative; z-index: 1; }
+
+    .congrats-banner {
+      text-align: center; margin-bottom: 28px;
+      animation: slideUp 0.5s ease;
+    }
+    .confetti-row { font-size: 28px; letter-spacing: 4px; margin-bottom: 10px; }
+    .congrats-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; margin-bottom: 6px; }
+    .congrats-title span { color: var(--gold); }
+    .congrats-sub { font-size: 14px; color: var(--muted); }
+
+    /* Steps done */
+    .steps-done { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 28px; }
+    .step { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--success); }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+    .step-line { width: 40px; height: 1px; background: var(--success); opacity: 0.4; }
+
+    /* CERTIFICATE */
+    .cert-wrap {
+      background: linear-gradient(135deg, #f8f0d0 0%, #fff8e7 40%, #fdeaaa 100%);
+      border-radius: 20px;
+      padding: 4px;
+      margin-bottom: 20px;
+      animation: slideUp 0.6s ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,200,66,0.3);
+    }
+
+    .cert {
+      background: linear-gradient(135deg, #fffdf4 0%, #fff9e6 100%);
+      border-radius: 17px;
+      padding: 48px 52px;
+      position: relative;
+      overflow: hidden;
+      color: #1a1005;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .cert::before {
+      content: '';
+      position: absolute;
+      inset: 12px;
+      border: 1.5px solid rgba(180,140,20,0.3);
+      border-radius: 10px;
+      pointer-events: none;
+    }
+
+    .cert-corner {
+      position: absolute;
+      width: 50px; height: 50px;
+      border-color: rgba(180,140,20,0.5);
+      border-style: solid;
+    }
+    .cert-corner.tl { top: 20px; left: 20px; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+    .cert-corner.tr { top: 20px; right: 20px; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+    .cert-corner.bl { bottom: 20px; left: 20px; border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+    .cert-corner.br { bottom: 20px; right: 20px; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+
+    .cert-logo { margin-bottom: 6px; }
+    .cert-logo-box { width: 42px; height: 42px; background: #1a1005; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: #f5c842; margin-bottom: 4px; }
+
+    .cert-presents { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #8a7040; margin-bottom: 8px; }
+    .cert-heading { font-family: 'Playfair Display', serif; font-style: italic; font-size: 14px; color: #6a5020; margin-bottom: 6px; }
+    .cert-certifies { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a7040; margin-bottom: 10px; }
+
+    .cert-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 36px;
+      color: #1a1005;
+      margin-bottom: 10px;
+      line-height: 1.1;
+      position: relative;
+    }
+    .cert-name::after {
+      content: '';
+      display: block;
+      width: 80px; height: 2px;
+      background: linear-gradient(90deg, transparent, #c9a227, transparent);
+      margin: 10px auto 0;
+    }
+
+    .cert-participated { font-size: 13px; color: #6a5020; margin-bottom: 6px; }
+    .cert-event-name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 22px; color: #1a1005; margin-bottom: 6px; }
+    .cert-event-date { font-size: 12px; color: #8a7040; margin-bottom: 20px; }
+
+    .cert-seal {
+      width: 70px; height: 70px;
+      border: 2px solid rgba(180,140,20,0.4);
+      border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+      background: rgba(245,200,66,0.08);
+    }
+    .cert-seal-icon { font-size: 24px; }
+    .cert-seal-text { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: #8a7040; margin-top: 2px; }
+
+    .cert-footer { font-size: 10px; color: #b09040; letter-spacing: 0.1em; }
+    .cert-id { font-size: 9px; color: #c0a060; margin-top: 4px; font-family: monospace; }
+
+    /* Buttons */
+    .action-row { display: flex; gap: 12px; margin-bottom: 20px; }
+    .btn-action { flex: 1; padding: 12px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-primary { background: var(--gold); color: var(--navy); }
+    .btn-primary:hover { background: var(--gold-dim); }
+    .btn-secondary { background: var(--glass); border: 1px solid var(--glass-border); color: var(--white); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+    .brand-footer { text-align: center; font-size: 12px; color: var(--muted); }
+    .brand-footer strong { color: var(--white); }
+
+    .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--glass-border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .loading { text-align: center; padding: 60px 0; }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .bg-blob, .congrats-banner, .steps-done, .action-row, .brand-footer { display: none; }
+      .cert-wrap { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-blob blob1"></div>
+<div class="bg-blob blob2"></div>
+
+<div class="container" id="container">
+  <div class="loading"><div class="spinner"></div></div>
+</div>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('event') || sessionStorage.getItem('ez_event_id');
+  const regId = params.get('reg') || sessionStorage.getItem('ez_reg_id');
+
+  async function init() {
+    if (!eventId || !regId) { showError('Invalid certificate link.'); return; }
+
+    try {
+      const [eventSnap, regSnap] = await Promise.all([
+        getDoc(doc(db, 'events', eventId)),
+        getDoc(doc(db, 'registrations', eventId, 'responses', regId))
+      ]);
+
+      if (!eventSnap.exists() || !regSnap.exists()) { showError('Certificate not found.'); return; }
+
+      const event = eventSnap.data();
+      const reg = regSnap.data();
+
+      // Verify evaluation is done
+      if (!reg.evaluationDone) {
+        window.location.href = `evaluate.html?event=${eventId}&reg=${regId}`;
+        return;
+      }
+
+      // Mark cert as released
+      if (!reg.certReleased) {
+        await updateDoc(doc(db, 'registrations', eventId, 'responses', regId), {
+          certReleased: true,
+          certReleasedAt: serverTimestamp()
+        });
+      }
+
+      renderCert(event, reg, regId);
+    } catch (e) { showError('Error: ' + e.message); }
+  }
+
+  function renderCert(event, reg, regId) {
+    const container = document.getElementById('container');
+    const shortId = regId.slice(0, 8).toUpperCase();
+
+    container.innerHTML = `
+      <div class="congrats-banner">
+        <div class="confetti-row">🎉 🏆 🎓 🏆 🎉</div>
+        <div class="congrats-title">Your E-Certificate is <span>Ready!</span></div>
+        <div class="congrats-sub">Thank you for participating and completing the evaluation</div>
+      </div>
+
+      <div class="steps-done">
+        <div class="step"><div class="step-dot"></div> Registration</div>
+        <div class="step-line"></div>
+        <div class="step"><div class="step-dot"></div> Evaluation</div>
+        <div class="step-line"></div>
+        <div class="step"><div class="step-dot"></div> E-Certificate</div>
+      </div>
+
+      <div class="cert-wrap" id="certElement">
+        <div class="cert">
+          <div class="cert-corner tl"></div>
+          <div class="cert-corner tr"></div>
+          <div class="cert-corner bl"></div>
+          <div class="cert-corner br"></div>
+
+          <div class="cert-logo">
+            <div class="cert-logo-box">EZ</div>
+          </div>
+
+          <div class="cert-presents">eventozaki · School Event System</div>
+          <div class="cert-heading">Certificate of Participation</div>
+          <div class="cert-certifies">This is to certify that</div>
+
+          <div class="cert-name">${reg.name || 'Participant'}</div>
+
+          <div class="cert-participated">has successfully participated in</div>
+          <div class="cert-event-name">${event.title || 'School Event'}</div>
+          <div class="cert-event-date">${event.date || ''}${event.venue ? ' · ' + event.venue : ''}</div>
+
+          <div class="cert-seal">
+            <div class="cert-seal-icon">🎓</div>
+            <div class="cert-seal-text">Verified</div>
+          </div>
+
+          <div class="cert-footer">CERTIFICATE OF COMPLETION · OFFICIAL DOCUMENT</div>
+          <div class="cert-id">ID: EZ-${shortId} · ${new Date().getFullYear()}</div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-action btn-primary" onclick="window.print()">🖨 Print / Save PDF</button>
+        <button class="btn-action btn-secondary" onclick="downloadCert()">⬇ Download PNG</button>
+      </div>
+
+      <div class="brand-footer">Powered by <strong>eventozaki</strong> · School Event Registration System</div>`;
+  }
+
+  window.downloadCert = async function() {
+    // Simple: open print dialog focused on cert
+    window.print();
+  };
+
+  function showError(msg) {
+    document.getElementById('container').innerHTML = `
+      <div style="text-align:center;padding:60px 20px">
+        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:8px">Oops!</div>
+        <div style="color:var(--muted)">${msg}</div>
+      </div>`;
+  }
+
+  init();
+</script>
+</body>
+</html>
