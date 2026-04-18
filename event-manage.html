@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eventozaki — Manage Event</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0b1628; --navy-mid: #112240; --navy-light: #1a2f52;
+      --gold: #f5c842; --gold-dim: #c9a227;
+      --white: #f0f4ff; --muted: #8892a4;
+      --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.09);
+      --success: #43d98c; --danger: #ff5f6d;
+      --sidebar-w: 240px;
+    }
+    body { min-height: 100vh; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); display: flex; }
+    .sidebar { width: var(--sidebar-w); background: var(--navy-mid); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; padding: 28px 20px; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; padding-bottom: 24px; border-bottom: 1px solid var(--glass-border); }
+    .brand-logo { width: 36px; height: 36px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: var(--navy); }
+    .brand h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; }
+    .brand h1 span { color: var(--gold); }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; margin-bottom: 2px; transition: all 0.2s; }
+    .nav-item:hover { background: var(--glass); color: var(--white); }
+    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--glass-border); padding-top: 16px; }
+    .btn-logout { width: 100%; padding: 10px; background: rgba(255,95,109,0.1); border: 1px solid rgba(255,95,109,0.2); color: var(--danger); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+    .main { margin-left: var(--sidebar-w); flex: 1; }
+    .topbar { padding: 22px 32px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; }
+    .topbar-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .btn-back { padding: 8px 16px; background: var(--glass); border: 1px solid var(--glass-border); color: var(--white); border-radius: 8px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-back:hover { background: rgba(255,255,255,0.08); }
+    .content { padding: 28px 32px; }
+    .grid3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px; padding: 22px; }
+    .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    .event-header { grid-column: 1 / -1; }
+    .event-big-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; margin-bottom: 6px; }
+    .event-meta-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .event-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-open { background: rgba(67,217,140,0.15); color: var(--success); }
+    .badge-closed { background: rgba(255,95,109,0.15); color: var(--danger); }
+
+    /* QR + Link */
+    .qr-box { display: flex; justify-content: center; margin-bottom: 14px; }
+    #qrcode canvas, #qrcode img { border-radius: 10px; }
+    .link-box { display: flex; gap: 8px; }
+    .link-input { flex: 1; padding: 9px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--muted); font-size: 12px; font-family: monospace; outline: none; }
+    .btn-copy { padding: 9px 14px; background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.3); color: var(--gold); border-radius: 8px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+    .btn-copy:hover { background: rgba(245,200,66,0.22); }
+    .btn-download-qr { width: 100%; margin-top: 10px; padding: 9px; background: var(--glass); border: 1px solid var(--glass-border); color: var(--white); border-radius: 8px; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+    .btn-download-qr:hover { background: rgba(255,255,255,0.08); }
+
+    /* Stats */
+    .stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--gold); }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Toggle */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .toggle-label { font-size: 14px; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); transition: 0.3s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; transition: 0.3s; border-radius: 50%; }
+    input:checked + .slider { background: var(--gold); }
+    input:checked + .slider:before { transform: translateX(20px); background: var(--navy); }
+
+    /* Responses Table */
+    .responses-section { margin-top: 24px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+    .btn-export { padding: 8px 16px; background: rgba(67,217,140,0.1); border: 1px solid rgba(67,217,140,0.3); color: var(--success); border-radius: 8px; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+    .btn-export:hover { background: rgba(67,217,140,0.2); }
+    .table-wrap { overflow-x: auto; }
+    .resp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .resp-table th { text-align: left; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--glass-border); white-space: nowrap; }
+    .resp-table td { padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .resp-table tr:hover td { background: var(--glass); }
+    .eval-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+    .eval-done { background: rgba(67,217,140,0.15); color: var(--success); }
+    .eval-pending { background: rgba(255,95,109,0.1); color: var(--muted); }
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy-light); border: 1px solid var(--glass-border); border-radius: 12px; padding: 14px 20px; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(67,217,140,0.3); color: var(--success); }
+    .toast.error { border-color: rgba(255,95,109,0.3); color: var(--danger); }
+    .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--glass-border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading { text-align: center; padding: 40px; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">EZ</div>
+    <h1>evento<span>zaki</span></h1>
+  </div>
+  <a class="nav-item" href="dashboard.html">← Back to Dashboard</a>
+  <div class="sidebar-bottom">
+    <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">Event Management</div>
+      <div class="topbar-sub" id="pageDate">Loading...</div>
+    </div>
+    <a href="dashboard.html" class="btn-back">← Dashboard</a>
+  </div>
+
+  <div class="content" id="mainContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { doc, getDoc, collection, getDocs, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('id');
+  let eventData = null;
+  let responses = [];
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    if (!eventId) { window.location.href = 'dashboard.html'; return; }
+    await loadEvent();
+  });
+
+  async function loadEvent() {
+    try {
+      const snap = await getDoc(doc(db, 'events', eventId));
+      if (!snap.exists()) { window.location.href = 'dashboard.html'; return; }
+      eventData = { id: snap.id, ...snap.data() };
+
+      document.getElementById('pageTitle').textContent = eventData.title;
+      document.getElementById('pageDate').textContent = `${eventData.date || ''}${eventData.venue ? ' · ' + eventData.venue : ''}`;
+
+      await loadResponses();
+      renderAll();
+    } catch (e) {
+      document.getElementById('mainContent').innerHTML = `<p style="color:var(--danger)">Error: ${e.message}</p>`;
+    }
+  }
+
+  async function loadResponses() {
+    try {
+      const q = query(collection(db, 'registrations', eventId, 'responses'), orderBy('submittedAt', 'desc'));
+      const snap = await getDocs(q);
+      responses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch { responses = []; }
+  }
+
+  function renderAll() {
+    const regLink = `${window.location.origin}/register.html?id=${eventId}`;
+    const evalDone = responses.filter(r => r.evaluationDone).length;
+
+    document.getElementById('mainContent').innerHTML = `
+      <div class="grid3">
+        <div class="card">
+          <div class="event-big-title">${eventData.title}</div>
+          <div style="margin-bottom:10px">
+            <span class="badge ${eventData.isOpen ? 'badge-open' : 'badge-closed'}" id="statusBadge">
+              ${eventData.isOpen ? '🟢 Open' : '🔴 Closed'}
+            </span>
+          </div>
+          <div class="event-meta-row">
+            ${eventData.date ? `<div class="event-meta-item">📅 ${eventData.date}${eventData.time ? ' at ' + eventData.time : ''}</div>` : ''}
+            ${eventData.venue ? `<div class="event-meta-item">📍 ${eventData.venue}</div>` : ''}
+          </div>
+          ${eventData.desc ? `<p style="font-size:13px;color:var(--muted);margin-top:12px">${eventData.desc}</p>` : ''}
+          <div class="toggle-row" style="margin-top:16px">
+            <span class="toggle-label">Registration ${eventData.isOpen ? 'Open' : 'Closed'}</span>
+            <label class="switch">
+              <input type="checkbox" id="openToggle" ${eventData.isOpen ? 'checked' : ''} onchange="toggleOpen()"/>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Responses</div>
+          <div class="stat-num">${responses.length}</div>
+          <div class="stat-label">Total Registrations</div>
+          <div style="margin-top:16px">
+            <div class="stat-num" style="font-size:24px;color:var(--success)">${evalDone}</div>
+            <div class="stat-label">Completed Evaluation</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔗 Registration Link & QR</div>
+          <div class="qr-box">
+            <div id="qrcode"></div>
+          </div>
+          <div class="link-box">
+            <input class="link-input" id="regLink" value="${regLink}" readonly/>
+            <button class="btn-copy" onclick="copyLink('${regLink}')">Copy</button>
+          </div>
+          <button class="btn-download-qr" onclick="downloadQR()">⬇ Download QR Code</button>
+        </div>
+      </div>
+
+      <div class="responses-section">
+        <div class="card">
+          <div class="section-header">
+            <div class="section-title">📝 Registrations</div>
+            <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+          </div>
+          <div class="table-wrap" id="responsesTable">
+            ${renderResponseTable()}
+          </div>
+        </div>
+      </div>`;
+
+    // Generate QR
+    setTimeout(() => {
+      try {
+        new QRCode(document.getElementById('qrcode'), {
+          text: regLink,
+          width: 160, height: 160,
+          colorDark: '#0b1628', colorLight: '#f5c842',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      } catch(e) { console.error(e); }
+    }, 100);
+  }
+
+  function renderResponseTable() {
+    if (responses.length === 0) {
+      return `<div class="empty-state">📭 No registrations yet. Share the link to get responses!</div>`;
+    }
+
+    const fields = eventData.fields || [];
+    return `
+      <table class="resp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            ${fields.map(f => `<th>${f.label}</th>`).join('')}
+            <th>Submitted</th>
+            <th>Evaluation</th>
+            <th>Cert</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${responses.map((r, i) => `
+            <tr>
+              <td style="color:var(--muted)">${i + 1}</td>
+              <td>${r.name || '—'}</td>
+              <td>${r.email || '—'}</td>
+              ${fields.map(f => `<td>${r[f.label] || '—'}</td>`).join('')}
+              <td style="color:var(--muted);font-size:12px">${r.submittedAt ? new Date(r.submittedAt.seconds * 1000).toLocaleString() : '—'}</td>
+              <td><span class="eval-badge ${r.evaluationDone ? 'eval-done' : 'eval-pending'}">${r.evaluationDone ? '✓ Done' : 'Pending'}</span></td>
+              <td><span class="eval-badge ${r.certReleased ? 'eval-done' : 'eval-pending'}">${r.certReleased ? '✓ Sent' : 'Pending'}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  window.toggleOpen = async function() {
+    const val = document.getElementById('openToggle').checked;
+    try {
+      await updateDoc(doc(db, 'events', eventId), { isOpen: val });
+      eventData.isOpen = val;
+      document.getElementById('statusBadge').textContent = val ? '🟢 Open' : '🔴 Closed';
+      document.getElementById('statusBadge').className = `badge ${val ? 'badge-open' : 'badge-closed'}`;
+      showToast(val ? 'Registration opened' : 'Registration closed', val ? 'success' : 'error');
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  };
+
+  window.copyLink = function(link) {
+    navigator.clipboard.writeText(link).then(() => showToast('Link copied!', 'success'));
+  };
+
+  window.downloadQR = function() {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (!canvas) { showToast('QR not ready', 'error'); return; }
+    const a = document.createElement('a');
+    a.download = `eventozaki-${eventId}-qr.png`;
+    a.href = canvas.toDataURL();
+    a.click();
+    showToast('QR downloaded!', 'success');
+  };
+
+  window.exportCSV = function() {
+    if (responses.length === 0) { showToast('No responses to export', 'error'); return; }
+    const fields = eventData.fields || [];
+    const headers = ['Name', 'Email', ...fields.map(f => f.label), 'Submitted At', 'Evaluation Done', 'Cert Released'];
+    const rows = responses.map(r => [
+      r.name || '',
+      r.email || '',
+      ...fields.map(f => r[f.label] || ''),
+      r.submittedAt ? new Date(r.submittedAt.seconds * 1000).toLocaleString() : '',
+      r.evaluationDone ? 'Yes' : 'No',
+      r.certReleased ? 'Yes' : 'No'
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${eventData.title}-responses.csv`;
+    a.click();
+    showToast('CSV exported!', 'success');
+  };
+
+  window.handleLogout = async function() {
+    await signOut(auth);
+    window.location.href = 'index.html';
+  };
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+</script>
+</body>
+</html>

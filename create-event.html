@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eventozaki — Create Event</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0b1628; --navy-mid: #112240; --navy-light: #1a2f52;
+      --gold: #f5c842; --gold-dim: #c9a227;
+      --white: #f0f4ff; --muted: #8892a4;
+      --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.09);
+      --success: #43d98c; --danger: #ff5f6d;
+      --sidebar-w: 240px;
+    }
+    body { min-height: 100vh; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); display: flex; }
+
+    .sidebar {
+      width: var(--sidebar-w); background: var(--navy-mid);
+      border-right: 1px solid var(--glass-border);
+      display: flex; flex-direction: column;
+      padding: 28px 20px; position: fixed;
+      top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; padding-bottom: 24px; border-bottom: 1px solid var(--glass-border); }
+    .brand-logo { width: 36px; height: 36px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; color: var(--navy); }
+    .brand h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+    .brand h1 span { color: var(--gold); }
+    .nav-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; margin-top: 4px; padding-left: 10px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; text-decoration: none; margin-bottom: 2px; }
+    .nav-item:hover { background: var(--glass); color: var(--white); }
+    .nav-item.active { background: rgba(245,200,66,0.12); color: var(--gold); }
+    .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--glass-border); padding-top: 16px; }
+    .btn-logout { width: 100%; padding: 10px; background: rgba(255,95,109,0.1); border: 1px solid rgba(255,95,109,0.2); color: var(--danger); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+    .btn-logout:hover { background: rgba(255,95,109,0.2); }
+
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { padding: 22px 32px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; }
+    .topbar-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .content { padding: 28px 32px; flex: 1; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px; padding: 24px;
+    }
+    .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 18px; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+    input[type=text], input[type=date], input[type=time], textarea, select {
+      width: 100%; padding: 11px 14px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
+      border-radius: 8px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    textarea { resize: vertical; min-height: 80px; }
+    select option { background: var(--navy-mid); }
+
+    /* Field Builder */
+    .field-list { margin-bottom: 16px; min-height: 40px; }
+    .field-item {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px; padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px;
+      animation: fadeIn 0.2s ease;
+      cursor: grab;
+    }
+    .field-item:active { cursor: grabbing; }
+    .field-drag { color: var(--muted); font-size: 14px; cursor: grab; }
+    .field-info { flex: 1; }
+    .field-label-text { font-size: 14px; font-weight: 500; }
+    .field-type-badge { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .field-required-badge { font-size: 10px; background: rgba(245,200,66,0.15); color: var(--gold); border-radius: 4px; padding: 1px 6px; }
+    .btn-remove { background: rgba(255,95,109,0.1); border: none; color: var(--danger); border-radius: 6px; padding: 4px 9px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+    .btn-remove:hover { background: rgba(255,95,109,0.2); }
+
+    .add-field-row {
+      display: grid; grid-template-columns: 1fr auto auto auto;
+      gap: 8px; align-items: end;
+    }
+
+    .btn-add-field {
+      padding: 11px 16px; background: rgba(245,200,66,0.12);
+      border: 1px solid rgba(245,200,66,0.3); color: var(--gold);
+      border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; white-space: nowrap; transition: background 0.2s;
+    }
+    .btn-add-field:hover { background: rgba(245,200,66,0.2); }
+
+    .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .checkbox-row input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--gold); cursor: pointer; }
+    .checkbox-row label { margin: 0; text-transform: none; font-size: 13px; letter-spacing: 0; color: var(--muted); cursor: pointer; }
+
+    .btn-save {
+      width: 100%; padding: 13px; background: var(--gold); color: var(--navy);
+      border: none; border-radius: 10px; font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 20px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-save:hover { background: var(--gold-dim); }
+    .btn-save:active { transform: scale(0.98); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Preview */
+    .preview-card { grid-column: 2; }
+    .preview-form { padding: 20px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px dashed var(--glass-border); }
+    .preview-event-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+    .preview-event-meta { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .preview-field { margin-bottom: 14px; }
+    .preview-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+    .preview-label span.req { color: var(--danger); margin-left: 2px; }
+    .preview-input { width: 100%; padding: 9px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 7px; color: var(--muted); font-size: 13px; pointer-events: none; }
+    .preview-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 0; }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy-light); border: 1px solid var(--glass-border); border-radius: 12px; padding: 14px 20px; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 999; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(67,217,140,0.3); color: var(--success); }
+    .toast.error { border-color: rgba(255,95,109,0.3); color: var(--danger); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--navy); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">EZ</div>
+    <h1>evento<span>zaki</span></h1>
+  </div>
+  <div class="nav-label">Menu</div>
+  <a class="nav-item" href="dashboard.html"><span class="icon">📋</span> Dashboard</a>
+  <a class="nav-item active" href="create-event.html"><span class="icon">✨</span> Create Event</a>
+  <div class="sidebar-bottom">
+    <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Create New Event</div>
+      <div class="topbar-sub">Set up your event and build the registration form</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="two-col">
+
+      <!-- LEFT: Form Builder -->
+      <div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">📌 Event Details</div>
+
+          <div class="form-group">
+            <label>Event Title *</label>
+            <input type="text" id="evTitle" placeholder="e.g. Tech Summit 2025"/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="evDesc" placeholder="Brief description of the event..."></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label>Date *</label>
+              <input type="date" id="evDate"/>
+            </div>
+            <div class="form-group">
+              <label>Time</label>
+              <input type="time" id="evTime"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Venue</label>
+            <input type="text" id="evVenue" placeholder="e.g. School Gymnasium"/>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="evOpen" checked/>
+            <label for="evOpen">Open for registration immediately</label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🧩 Registration Form Fields</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Add custom fields for the registration form. Name & Email are always included by default.</p>
+
+          <div class="field-list" id="fieldList"></div>
+
+          <!-- Add Field -->
+          <div class="add-field-row">
+            <div class="form-group" style="margin:0">
+              <input type="text" id="newFieldLabel" placeholder="Field label (e.g. Year Level)"/>
+            </div>
+            <div class="form-group" style="margin:0">
+              <select id="newFieldType">
+                <option value="text">Text</option>
+                <option value="textarea">Long Text</option>
+                <option value="number">Number</option>
+                <option value="select">Dropdown</option>
+                <option value="radio">Multiple Choice</option>
+                <option value="checkbox">Checkbox</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <div class="checkbox-row">
+                <input type="checkbox" id="newFieldRequired"/>
+                <label for="newFieldRequired">Required</label>
+              </div>
+            </div>
+            <button class="btn-add-field" onclick="addField()">+ Add</button>
+          </div>
+
+          <div id="optionsRow" style="display:none;margin-top:10px">
+            <div class="form-group" style="margin:0">
+              <label>Options (comma-separated)</label>
+              <input type="text" id="newFieldOptions" placeholder="Option 1, Option 2, Option 3"/>
+            </div>
+          </div>
+
+          <button class="btn-save" id="saveBtn" onclick="saveEvent()">🚀 Create Event</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Preview -->
+      <div>
+        <div class="card preview-card" style="position:sticky;top:24px">
+          <div class="card-title">👁 Live Preview</div>
+          <div class="preview-form" id="previewForm">
+            <div class="preview-event-title" id="previewTitle">Event Title</div>
+            <div class="preview-event-meta" id="previewMeta">Date · Venue</div>
+
+            <!-- Default fields always shown -->
+            <div class="preview-field">
+              <div class="preview-label">Full Name <span class="req">*</span></div>
+              <div class="preview-input">Your name</div>
+            </div>
+            <div class="preview-field">
+              <div class="preview-label">Email Address <span class="req">*</span></div>
+              <div class="preview-input">your@email.com</div>
+            </div>
+
+            <div id="previewCustomFields">
+              <div class="preview-empty">Custom fields will appear here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  let fields = [];
+
+  // Auth guard
+  onAuthStateChanged(auth, user => {
+    if (!user) window.location.href = 'index.html';
+  });
+
+  // Show/hide options for select/radio
+  document.getElementById('newFieldType').addEventListener('change', function() {
+    document.getElementById('optionsRow').style.display =
+      ['select','radio'].includes(this.value) ? 'block' : 'none';
+  });
+
+  // Live preview for event title/meta
+  document.getElementById('evTitle').addEventListener('input', updatePreview);
+  document.getElementById('evDate').addEventListener('input', updatePreview);
+  document.getElementById('evVenue').addEventListener('input', updatePreview);
+
+  function updatePreview() {
+    document.getElementById('previewTitle').textContent = document.getElementById('evTitle').value || 'Event Title';
+    const d = document.getElementById('evDate').value;
+    const v = document.getElementById('evVenue').value;
+    document.getElementById('previewMeta').textContent = [d || 'Date', v || 'Venue'].join(' · ');
+  }
+
+  window.addField = function() {
+    const label = document.getElementById('newFieldLabel').value.trim();
+    const type = document.getElementById('newFieldType').value;
+    const required = document.getElementById('newFieldRequired').checked;
+    const optionsRaw = document.getElementById('newFieldOptions').value;
+
+    if (!label) { showToast('Enter a field label', 'error'); return; }
+
+    const options = ['select','radio'].includes(type)
+      ? optionsRaw.split(',').map(o => o.trim()).filter(Boolean)
+      : [];
+
+    fields.push({ label, type, required, options });
+
+    // Reset
+    document.getElementById('newFieldLabel').value = '';
+    document.getElementById('newFieldRequired').checked = false;
+    document.getElementById('newFieldOptions').value = '';
+    document.getElementById('optionsRow').style.display = 'none';
+    document.getElementById('newFieldType').value = 'text';
+
+    renderFields();
+  };
+
+  function renderFields() {
+    const list = document.getElementById('fieldList');
+    if (fields.length === 0) { list.innerHTML = ''; return; }
+    list.innerHTML = fields.map((f, i) => `
+      <div class="field-item">
+        <span class="field-drag">⠿</span>
+        <div class="field-info">
+          <div class="field-label-text">${f.label}</div>
+          <div class="field-type-badge">${capitalize(f.type)}${f.options.length ? ' · ' + f.options.join(', ') : ''}</div>
+        </div>
+        ${f.required ? '<span class="field-required-badge">Required</span>' : ''}
+        <button class="btn-remove" onclick="removeField(${i})">✕</button>
+      </div>`).join('');
+
+    // Update preview
+    const pContainer = document.getElementById('previewCustomFields');
+    pContainer.innerHTML = fields.map(f => `
+      <div class="preview-field">
+        <div class="preview-label">${f.label}${f.required ? ' <span class="req">*</span>' : ''}</div>
+        <div class="preview-input">${f.type === 'select' && f.options.length ? f.options[0] : capitalize(f.type) + ' input'}</div>
+      </div>`).join('');
+  }
+
+  window.removeField = function(i) {
+    fields.splice(i, 1);
+    renderFields();
+  };
+
+  window.saveEvent = async function() {
+    const title = document.getElementById('evTitle').value.trim();
+    const desc = document.getElementById('evDesc').value.trim();
+    const date = document.getElementById('evDate').value;
+    const time = document.getElementById('evTime').value;
+    const venue = document.getElementById('evVenue').value.trim();
+    const isOpen = document.getElementById('evOpen').checked;
+
+    if (!title) { showToast('Event title is required', 'error'); return; }
+    if (!date) { showToast('Event date is required', 'error'); return; }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Creating event...';
+
+    try {
+      const docRef = await addDoc(collection(db, 'events'), {
+        title, desc, date, time, venue, isOpen,
+        fields,
+        createdAt: serverTimestamp()
+      });
+
+      showToast('Event created successfully!', 'success');
+      setTimeout(() => window.location.href = `event-manage.html?id=${docRef.id}`, 1200);
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Create Event';
+    }
+  };
+
+  window.handleLogout = async function() {
+    await signOut(auth);
+    window.location.href = 'index.html';
+  };
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+</script>
+</body>
+</html>
