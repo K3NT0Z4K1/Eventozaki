@@ -1,11 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eventozaki — Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #0b1628; --navy-mid: #112240;
+      --gold: #f5c842; --gold-dim: #c9a227;
+      --white: #f0f4ff; --muted: #8892a4;
+      --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.09);
+      --success: #43d98c; --danger: #ff5f6d;
+    }
+    body { min-height: 100vh; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px 60px; }
+    .bg-blob { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.12; pointer-events: none; }
+    .blob1 { width: 400px; height: 400px; background: var(--gold); top: -80px; right: -80px; }
+    .blob2 { width: 350px; height: 350px; background: #3a7bd5; bottom: -60px; left: -60px; }
+    .container { width: 100%; max-width: 600px; position: relative; z-index: 1; }
+
+    /* Event Header */
+    .event-header {
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 20px; padding: 28px 32px; margin-bottom: 20px;
+      animation: slideUp 0.5s ease;
+    }
+    .event-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(67,217,140,0.12); border: 1px solid rgba(67,217,140,0.25); color: var(--success); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+    .event-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; margin-bottom: 8px; }
+    .event-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+    .event-meta-item { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .brand-tag { display: flex; align-items: center; gap: 6px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--glass-border); }
+    .brand-tag-logo { width: 22px; height: 22px; background: var(--gold); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 9px; color: var(--navy); }
+    .brand-tag span { font-size: 12px; color: var(--muted); }
+    .brand-tag strong { color: var(--white); font-size: 12px; }
+
+    /* Form */
+    .form-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 28px 32px; animation: slideUp 0.6s ease; }
+    .form-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+    label .req { color: var(--danger); margin-left: 2px; }
+    input[type=text], input[type=email], input[type=number], input[type=date], textarea, select {
+      width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.06);
+      border: 1px solid var(--glass-border); border-radius: 10px;
+      color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); background: rgba(245,200,66,0.05); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    textarea { resize: vertical; min-height: 90px; }
+    select option { background: var(--navy-mid); }
+
+    /* Radio / Checkbox options */
+    .options-list { display: flex; flex-direction: column; gap: 8px; }
+    .option-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 8px; cursor: pointer; transition: border-color 0.2s; }
+    .option-item:hover { border-color: var(--gold); }
+    .option-item input[type=radio], .option-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
+    .option-item label { margin: 0; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--white); cursor: pointer; }
+
+    .btn-submit { width: 100%; padding: 14px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px; transition: background 0.2s, transform 0.1s; }
+    .btn-submit:hover { background: var(--gold-dim); }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* States */
+    .state-loading, .state-closed, .state-success { text-align: center; padding: 60px 20px; }
+    .state-icon { font-size: 56px; margin-bottom: 16px; }
+    .state-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; margin-bottom: 8px; }
+    .state-sub { color: var(--muted); font-size: 15px; }
+    .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--glass-border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .btn-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--navy); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+    .step { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .step.active { color: var(--gold); font-weight: 600; }
+    .step.done { color: var(--success); }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .step.active .step-dot { background: var(--gold); }
+    .step.done .step-dot { background: var(--success); }
+    .step-line { flex: 1; height: 1px; background: var(--glass-border); }
+  </style>
 </head>
 <body>
-  
+<div class="bg-blob blob1"></div>
+<div class="bg-blob blob2"></div>
+
+<div class="container" id="container">
+  <div class="state-loading">
+    <div class="spinner"></div>
+    <p style="margin-top:16px;color:var(--muted)">Loading event...</p>
+  </div>
+</div>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('id');
+  let eventData = null;
+
+  async function init() {
+    if (!eventId) { showError('Invalid registration link.'); return; }
+    try {
+      const snap = await getDoc(doc(db, 'events', eventId));
+      if (!snap.exists()) { showError('Event not found.'); return; }
+      eventData = { id: snap.id, ...snap.data() };
+      if (!eventData.isOpen) { showClosed(); return; }
+      renderForm();
+    } catch (e) { showError('Error: ' + e.message); }
+  }
+
+  function renderForm() {
+    const fields = eventData.fields || [];
+    const container = document.getElementById('container');
+    container.innerHTML = `
+      <div class="event-header">
+        <div class="event-badge">🟢 Registration Open</div>
+        <div class="event-title">${eventData.title}</div>
+        <div class="event-meta">
+          ${eventData.date ? `<div class="event-meta-item">📅 ${eventData.date}${eventData.time ? ' at ' + eventData.time : ''}</div>` : ''}
+          ${eventData.venue ? `<div class="event-meta-item">📍 ${eventData.venue}</div>` : ''}
+        </div>
+        ${eventData.desc ? `<p style="font-size:14px;color:var(--muted);margin-top:12px">${eventData.desc}</p>` : ''}
+        <div class="brand-tag">
+          <div class="brand-tag-logo">EZ</div>
+          <span>Powered by <strong>eventozaki</strong></span>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="step-indicator">
+          <div class="step active"><div class="step-dot"></div> Registration</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot"></div> Evaluation</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot"></div> Get E-Cert</div>
+        </div>
+        <div class="form-title">📝 Registration Form</div>
+
+        <div class="form-group">
+          <label>Full Name <span class="req">*</span></label>
+          <input type="text" id="field_name" placeholder="Enter your full name"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" id="field_email" placeholder="your@email.com"/>
+        </div>
+
+        ${fields.map(f => renderField(f)).join('')}
+
+        <div id="formError" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+        <button class="btn-submit" id="submitBtn" onclick="submitForm()">Submit Registration →</button>
+      </div>`;
+  }
+
+  function renderField(f) {
+    const id = `field_${f.label.replace(/\s+/g, '_')}`;
+    const req = f.required ? '<span class="req">*</span>' : '';
+
+    if (f.type === 'text') return `<div class="form-group"><label>${f.label} ${req}</label><input type="text" id="${id}" placeholder="${f.label}"/></div>`;
+    if (f.type === 'textarea') return `<div class="form-group"><label>${f.label} ${req}</label><textarea id="${id}" placeholder="${f.label}"></textarea></div>`;
+    if (f.type === 'number') return `<div class="form-group"><label>${f.label} ${req}</label><input type="number" id="${id}" placeholder="0"/></div>`;
+    if (f.type === 'date') return `<div class="form-group"><label>${f.label} ${req}</label><input type="date" id="${id}"/></div>`;
+    if (f.type === 'checkbox') return `<div class="form-group"><div class="option-item"><input type="checkbox" id="${id}"/><label for="${id}">${f.label}</label></div></div>`;
+    if (f.type === 'select') return `<div class="form-group"><label>${f.label} ${req}</label><select id="${id}"><option value="">Select an option</option>${(f.options || []).map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
+    if (f.type === 'radio') return `
+      <div class="form-group">
+        <label>${f.label} ${req}</label>
+        <div class="options-list">
+          ${(f.options || []).map((o, i) => `
+            <div class="option-item">
+              <input type="radio" name="${id}" id="${id}_${i}" value="${o}"/>
+              <label for="${id}_${i}">${o}</label>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    return '';
+  }
+
+  window.submitForm = async function() {
+    const name = document.getElementById('field_name')?.value.trim();
+    const email = document.getElementById('field_email')?.value.trim();
+    const errEl = document.getElementById('formError');
+
+    if (!name) { showFieldError('Please enter your full name.'); return; }
+    if (!email || !email.includes('@')) { showFieldError('Please enter a valid email.'); return; }
+
+    // Validate required custom fields
+    const fields = eventData.fields || [];
+    for (const f of fields) {
+      if (!f.required) continue;
+      const id = `field_${f.label.replace(/\s+/g, '_')}`;
+      if (f.type === 'radio') {
+        const checked = document.querySelector(`input[name="${id}"]:checked`);
+        if (!checked) { showFieldError(`"${f.label}" is required.`); return; }
+      } else {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (f.type === 'checkbox' && !el.checked) { showFieldError(`"${f.label}" is required.`); return; }
+        if (f.type !== 'checkbox' && !el.value.trim()) { showFieldError(`"${f.label}" is required.`); return; }
+      }
+    }
+
+    errEl.style.display = 'none';
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spin"></span>Submitting...';
+
+    // Build data object
+    const data = { name, email, submittedAt: serverTimestamp(), evaluationDone: false, certReleased: false };
+    for (const f of fields) {
+      const id = `field_${f.label.replace(/\s+/g, '_')}`;
+      if (f.type === 'radio') {
+        const checked = document.querySelector(`input[name="${id}"]:checked`);
+        data[f.label] = checked ? checked.value : '';
+      } else if (f.type === 'checkbox') {
+        data[f.label] = document.getElementById(id)?.checked ? 'Yes' : 'No';
+      } else {
+        data[f.label] = document.getElementById(id)?.value || '';
+      }
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, 'registrations', eventId, 'responses'), data);
+      // Save registration ID to session for evaluation linking
+      sessionStorage.setItem('ez_reg_id', docRef.id);
+      sessionStorage.setItem('ez_event_id', eventId);
+      sessionStorage.setItem('ez_name', name);
+      sessionStorage.setItem('ez_email', email);
+      // Redirect to evaluation
+      window.location.href = `evaluate.html?event=${eventId}&reg=${docRef.id}`;
+    } catch (e) {
+      showFieldError('Submission failed: ' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Registration →';
+    }
+  };
+
+  function showFieldError(msg) {
+    const el = document.getElementById('formError');
+    if (el) { el.textContent = '⚠️ ' + msg; el.style.display = 'block'; }
+  }
+
+  function showClosed() {
+    document.getElementById('container').innerHTML = `
+      <div class="form-card" style="text-align:center;padding:60px 32px">
+        <div class="state-icon">🔒</div>
+        <div class="state-title">Registration Closed</div>
+        <div class="state-sub">This event is no longer accepting registrations.</div>
+        <div style="margin-top:20px" class="brand-tag" style="justify-content:center">
+          <div class="brand-tag-logo">EZ</div>
+          <span>Powered by <strong>eventozaki</strong></span>
+        </div>
+      </div>`;
+  }
+
+  function showError(msg) {
+    document.getElementById('container').innerHTML = `
+      <div class="form-card" style="text-align:center;padding:60px 32px">
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">Something went wrong</div>
+        <div class="state-sub">${msg}</div>
+      </div>`;
+  }
+
+  init();
+</script>
 </body>
 </html>
