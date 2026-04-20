@@ -6,75 +6,7 @@
   <title>eventozaki — Evaluation</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --navy: #0b1628; --navy-mid: #112240;
-      --gold: #f5c842; --gold-dim: #c9a227;
-      --white: #f0f4ff; --muted: #8892a4;
-      --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.09);
-      --success: #43d98c; --danger: #ff5f6d;
-    }
-    body { min-height: 100vh; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px 60px; }
-    .bg-blob { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.12; pointer-events: none; }
-    .blob1 { width: 400px; height: 400px; background: var(--success); top: -80px; right: -80px; }
-    .blob2 { width: 350px; height: 350px; background: #3a7bd5; bottom: -60px; left: -60px; }
-    .container { width: 100%; max-width: 600px; position: relative; z-index: 1; }
-
-    .progress-header { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 22px 28px; margin-bottom: 20px; animation: slideUp 0.4s ease; }
-    .step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .step { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-    .step.done { color: var(--success); }
-    .step.active { color: var(--gold); font-weight: 600; }
-    .step.pending { color: var(--muted); }
-    .step-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .step.done .step-dot { background: var(--success); }
-    .step.active .step-dot { background: var(--gold); }
-    .step.pending .step-dot { background: var(--muted); }
-    .step-line { flex: 1; height: 1px; background: var(--glass-border); }
-    .success-reg { font-size: 13px; color: var(--success); }
-    .success-reg strong { color: var(--white); }
-
-    .form-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 28px 32px; animation: slideUp 0.5s ease; }
-    .form-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 6px; }
-    .form-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
-
-    /* Star Rating */
-    .rating-group { margin-bottom: 20px; }
-    .rating-label { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: block; }
-    .stars { display: flex; gap: 6px; }
-    .star { font-size: 28px; cursor: pointer; transition: transform 0.15s, filter 0.15s; filter: grayscale(1) opacity(0.4); }
-    .star:hover, .star.active { filter: grayscale(0) opacity(1); transform: scale(1.15); }
-
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
-    textarea, select, input[type=text] {
-      width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.06);
-      border: 1px solid var(--glass-border); border-radius: 10px;
-      color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s;
-    }
-    textarea:focus, select:focus, input:focus { border-color: var(--gold); background: rgba(245,200,66,0.05); }
-    textarea::placeholder, input::placeholder { color: var(--muted); }
-    textarea { resize: vertical; min-height: 90px; }
-    select option { background: var(--navy-mid); }
-
-    /* Option Pills */
-    .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .pill { padding: 7px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-    .pill:hover { border-color: var(--gold); }
-    .pill.selected { background: rgba(245,200,66,0.12); border-color: var(--gold); color: var(--gold); }
-
-    .btn-submit { width: 100%; padding: 14px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 8px; transition: background 0.2s, transform 0.1s; }
-    .btn-submit:hover { background: var(--gold-dim); }
-    .btn-submit:active { transform: scale(0.98); }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .err { color: var(--danger); font-size: 13px; margin-bottom: 10px; display: none; }
-    .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--glass-border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
-    .btn-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--navy); border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    .divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
+    
   </style>
 </head>
 <body>
