@@ -1,0 +1,173 @@
+import { db } from './firebase-config.js';
+  import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('id');
+  let eventData = null;
+
+  async function init() {
+    if (!eventId) { showError('Invalid registration link.'); return; }
+    try {
+      const snap = await getDoc(doc(db, 'events', eventId));
+      if (!snap.exists()) { showError('Event not found.'); return; }
+      eventData = { id: snap.id, ...snap.data() };
+      if (!eventData.isOpen) { showClosed(); return; }
+      renderForm();
+    } catch (e) { showError('Error: ' + e.message); }
+  }
+
+  function renderForm() {
+    const fields = eventData.fields || [];
+    const container = document.getElementById('container');
+    container.innerHTML = `
+      <div class="event-header">
+        <div class="event-badge">🟢 Registration Open</div>
+        <div class="event-title">${eventData.title}</div>
+        <div class="event-meta">
+          ${eventData.date ? `<div class="event-meta-item">📅 ${eventData.date}${eventData.time ? ' at ' + eventData.time : ''}</div>` : ''}
+          ${eventData.venue ? `<div class="event-meta-item">📍 ${eventData.venue}</div>` : ''}
+        </div>
+        ${eventData.desc ? `<p style="font-size:14px;color:var(--muted);margin-top:12px">${eventData.desc}</p>` : ''}
+        <div class="brand-tag">
+          <div class="brand-tag-logo">EZ</div>
+          <span>Powered by <strong>eventozaki</strong></span>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="step-indicator">
+          <div class="step active"><div class="step-dot"></div> Registration</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot"></div> Evaluation</div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-dot"></div> Get E-Cert</div>
+        </div>
+        <div class="form-title">📝 Registration Form</div>
+
+        <div class="form-group">
+          <label>Full Name <span class="req">*</span></label>
+          <input type="text" id="field_name" placeholder="Enter your full name"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address <span class="req">*</span></label>
+          <input type="email" id="field_email" placeholder="your@email.com"/>
+        </div>
+
+        ${fields.map(f => renderField(f)).join('')}
+
+        <div id="formError" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+        <button class="btn-submit" id="submitBtn" onclick="submitForm()">Submit Registration →</button>
+      </div>`;
+  }
+
+  function renderField(f) {
+    const id = `field_${f.label.replace(/\s+/g, '_')}`;
+    const req = f.required ? '<span class="req">*</span>' : '';
+
+    if (f.type === 'text') return `<div class="form-group"><label>${f.label} ${req}</label><input type="text" id="${id}" placeholder="${f.label}"/></div>`;
+    if (f.type === 'textarea') return `<div class="form-group"><label>${f.label} ${req}</label><textarea id="${id}" placeholder="${f.label}"></textarea></div>`;
+    if (f.type === 'number') return `<div class="form-group"><label>${f.label} ${req}</label><input type="number" id="${id}" placeholder="0"/></div>`;
+    if (f.type === 'date') return `<div class="form-group"><label>${f.label} ${req}</label><input type="date" id="${id}"/></div>`;
+    if (f.type === 'checkbox') return `<div class="form-group"><div class="option-item"><input type="checkbox" id="${id}"/><label for="${id}">${f.label}</label></div></div>`;
+    if (f.type === 'select') return `<div class="form-group"><label>${f.label} ${req}</label><select id="${id}"><option value="">Select an option</option>${(f.options || []).map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
+    if (f.type === 'radio') return `
+      <div class="form-group">
+        <label>${f.label} ${req}</label>
+        <div class="options-list">
+          ${(f.options || []).map((o, i) => `
+            <div class="option-item">
+              <input type="radio" name="${id}" id="${id}_${i}" value="${o}"/>
+              <label for="${id}_${i}">${o}</label>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    return '';
+  }
+
+  window.submitForm = async function() {
+    const name = document.getElementById('field_name')?.value.trim();
+    const email = document.getElementById('field_email')?.value.trim();
+    const errEl = document.getElementById('formError');
+
+    if (!name) { showFieldError('Please enter your full name.'); return; }
+    if (!email || !email.includes('@')) { showFieldError('Please enter a valid email.'); return; }
+
+    // Validate required custom fields
+    const fields = eventData.fields || [];
+    for (const f of fields) {
+      if (!f.required) continue;
+      const id = `field_${f.label.replace(/\s+/g, '_')}`;
+      if (f.type === 'radio') {
+        const checked = document.querySelector(`input[name="${id}"]:checked`);
+        if (!checked) { showFieldError(`"${f.label}" is required.`); return; }
+      } else {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (f.type === 'checkbox' && !el.checked) { showFieldError(`"${f.label}" is required.`); return; }
+        if (f.type !== 'checkbox' && !el.value.trim()) { showFieldError(`"${f.label}" is required.`); return; }
+      }
+    }
+
+    errEl.style.display = 'none';
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spin"></span>Submitting...';
+
+    // Build data object
+    const data = { name, email, submittedAt: serverTimestamp(), evaluationDone: false, certReleased: false };
+    for (const f of fields) {
+      const id = `field_${f.label.replace(/\s+/g, '_')}`;
+      if (f.type === 'radio') {
+        const checked = document.querySelector(`input[name="${id}"]:checked`);
+        data[f.label] = checked ? checked.value : '';
+      } else if (f.type === 'checkbox') {
+        data[f.label] = document.getElementById(id)?.checked ? 'Yes' : 'No';
+      } else {
+        data[f.label] = document.getElementById(id)?.value || '';
+      }
+    }
+
+    try {
+      const docRef = await addDoc(collection(db, 'registrations', eventId, 'responses'), data);
+      // Save registration ID to session for evaluation linking
+      sessionStorage.setItem('ez_reg_id', docRef.id);
+      sessionStorage.setItem('ez_event_id', eventId);
+      sessionStorage.setItem('ez_name', name);
+      sessionStorage.setItem('ez_email', email);
+      // Redirect to evaluation
+      window.location.href = `evaluate.html?event=${eventId}&reg=${docRef.id}`;
+    } catch (e) {
+      showFieldError('Submission failed: ' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Submit Registration →';
+    }
+  };
+
+  function showFieldError(msg) {
+    const el = document.getElementById('formError');
+    if (el) { el.textContent = '⚠️ ' + msg; el.style.display = 'block'; }
+  }
+
+  function showClosed() {
+    document.getElementById('container').innerHTML = `
+      <div class="form-card" style="text-align:center;padding:60px 32px">
+        <div class="state-icon">🔒</div>
+        <div class="state-title">Registration Closed</div>
+        <div class="state-sub">This event is no longer accepting registrations.</div>
+        <div style="margin-top:20px" class="brand-tag" style="justify-content:center">
+          <div class="brand-tag-logo">EZ</div>
+          <span>Powered by <strong>eventozaki</strong></span>
+        </div>
+      </div>`;
+  }
+
+  function showError(msg) {
+    document.getElementById('container').innerHTML = `
+      <div class="form-card" style="text-align:center;padding:60px 32px">
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">Something went wrong</div>
+        <div class="state-sub">${msg}</div>
+      </div>`;
+  }
+
+  init();
